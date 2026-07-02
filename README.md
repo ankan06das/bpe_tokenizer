@@ -7,7 +7,7 @@ It contains a basic BPE tokenizer implemented in Python (using GPT-2 style pre-t
 ---
 
 ## 🌐 Live Web App
-The hosted web app is available at: [bpe.ankandas.online](https://bpe.ankandas.online)
+The hosted web app is available at this [link](https://bpe-tokenizer-wwhm.onrender.com/)
 
 ---
 
@@ -43,6 +43,7 @@ python scripts/train_tokenizer.py \
 For convenience, some pre-trained models are already provided in the [models/](./models) folder:
 - [tokenizer_shakespeare_300.pkl](./models/tokenizer_shakespeare_300.pkl) (small vocabulary, 300 tokens)
 - [tokenizer_shakespeare_5000.pkl](./models/tokenizer_shakespeare_5000.pkl) (medium vocabulary, 5000 tokens)
+- [tokenizer_shakespaare_12712.pkl](./models/tokenizer_shakespeare_12712.pkl) (This is a max size possible for the vocabulary to grow from the given training corpus below)
 
 These models are trained using the [shakespeare.txt](./shakespeare.txt) file.
 You can load these files directly through the web UI under the "Load BPE Model" section.
