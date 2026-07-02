@@ -1,4 +1,4 @@
-# BPE Tokenizer Visualizer
+# Byte-Pair Encoding (BPE) Tokenizer Visualizer
 
 This is a simple project built for educational purposes to understand and visualize Byte Pair Encoding (BPE) tokenization, which is widely used in modern Large Language Models (LLMs). 
 
