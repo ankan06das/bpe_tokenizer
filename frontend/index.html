@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>BPE Tokenizer Visualizer</title>
+  <!-- Tailwind CSS v3 -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <style data-purpose="typography">
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+    }
+    
+    /* Input text, encoded tokens, and token IDs must be monospace */
+    #input-text,
+    #token-list,
+    .token-chip,
+    #visual-breakdown,
+    .token-id {
+      font-family: 'JetBrains Mono', monospace !important;
+    }
+  </style>
+  <link rel="stylesheet" href="/static/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-50 dark:bg-[#0b1326] min-h-screen text-slate-900 dark:text-slate-200 transition-colors duration-200">
+
+  <!-- BEGIN: MainHeader -->
+  <header class="bg-white dark:bg-[#0f172a] border-b border-slate-200 dark:border-slate-800 py-6 sticky top-0 z-10 transition-colors duration-200">
+    <div class="max-w-6xl mx-auto px-6 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-indigo-600 p-2 rounded-lg">
+          <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-800 dark:text-white">BPE Tokenizer Visualizer</h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button id="theme-toggle" class="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors flex items-center justify-center" title="Toggle Theme">
+          <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+        </button>
+      </div>
+    </div>
+  </header>
+  <!-- END: MainHeader -->
+
+  <main class="max-w-6xl mx-auto px-6 py-8 space-y-8">
+    <!-- BEGIN: ConfigurationSection -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6" data-purpose="model-configuration">
+      <!-- Model Status -->
+      <div class="bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm transition-colors duration-200">
+        <h2 class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Model Status</h2>
+        <div class="flex items-center space-x-3">
+          <div id="status-indicator" class="h-3 w-3 rounded-full bg-slate-300 dark:bg-slate-600 animate-pulse"></div>
+          <p class="text-slate-700 dark:text-slate-300 font-medium" id="status-text">No model loaded</p>
+        </div>
+      </div>
+      <!-- Load Model -->
+      <div class="md:col-span-2 bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm transition-colors duration-200">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Load BPE Model</h2>
+        </div>
+        <div class="flex space-x-3">
+          <div class="relative flex-grow">
+            <input class="hidden" id="model-file" type="file" accept=".pkl">
+            <label class="flex items-center px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-[#0f172a] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-sm text-slate-600 dark:text-slate-300" for="model-file">
+              <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+              </svg>
+              <span id="model-file-name">Choose a vocabulary file...</span>
+            </label>
+          </div>
+          <button id="load-btn" onclick="loadModel()" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 dark:shadow-indigo-900/20 active:transform active:scale-95">
+            Load
+          </button>
+        </div>
+        <div id="load-status" class="mt-2 text-xs"></div>
+      </div>
+    </section>
+    <!-- END: ConfigurationSection -->
+
+    <!-- BEGIN: WorkspaceSection -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-8" data-purpose="main-workspace">
+      <!-- Input Area -->
+      <div class="lg:col-span-8 flex flex-col space-y-4">
+        <label class="text-sm font-semibold text-slate-600 dark:text-slate-400" for="input-text">Input Text</label>
+        <div class="relative group">
+          <textarea class="w-full h-80 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1e293b] text-slate-900 dark:text-white shadow-sm focus:ring-4 focus:ring-indigo-500/10 dark:focus:ring-indigo-500/20 focus:border-indigo-500 transition-all resize-none text-lg leading-relaxed custom-scrollbar placeholder:text-slate-400 dark:placeholder:text-slate-500" data-purpose="user-text-input" id="input-text" placeholder="Enter text to tokenize..."></textarea>
+          <div class="absolute bottom-4 right-4 flex space-x-2">
+            <button id="clear-btn" class="p-2 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg transition-colors" title="Clear Text">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        <!-- Options -->
+        <div class="flex items-center space-x-4 pt-2">
+          <label class="inline-flex items-center cursor-pointer group">
+            <input class="w-5 h-5 rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-indigo-600 focus:ring-indigo-500 dark:focus:ring-offset-[#0b1326] transition-colors" id="show-whitespace" type="checkbox" checked>
+            <span class="ml-3 text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200">Show whitespace markers</span>
+          </label>
+        </div>
+      </div>
+      <!-- Stats and Results Cards -->
+      <div class="lg:col-span-4 flex flex-col space-y-6">
+        <!-- Token Count -->
+        <div class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5 flex items-center justify-between transition-colors duration-200" id="token-count-card">
+          <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">Token Count</h3>
+          <div class="flex items-center space-x-2">
+            <span class="text-2xl font-bold text-indigo-600 dark:text-indigo-400" id="token-count">0</span>
+            <span class="text-slate-400 dark:text-slate-500 text-xs font-medium uppercase tracking-wider">tokens</span>
+          </div>
+        </div>
+        <!-- Token List Visualization -->
+        <div class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-full overflow-hidden transition-colors duration-200">
+          <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">Encoded Tokens</h3>
+          </div>
+          <div class="p-5 min-h-[140px] text-slate-400 dark:text-slate-500 text-sm flex flex-wrap gap-2 italic content-start custom-scrollbar overflow-y-auto" id="token-list">
+            Tokens will appear here...
+          </div>
+        </div>
+        <!-- Detailed Mapping Visualization -->
+        <div class="bg-white dark:bg-[#1e293b] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col h-full overflow-hidden transition-colors duration-200">
+          <div class="px-5 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300">Token IDs</h3>
+          </div>
+          <div class="p-5 min-h-[140px] text-slate-400 dark:text-slate-500 text-sm flex flex-wrap gap-1 content-start custom-scrollbar overflow-y-auto" id="visual-breakdown">
+            The IDs of the tokens will appear here...
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- END: WorkspaceSection -->
+  </main>
+
+  <!-- BEGIN: Footer -->
+  <footer class="max-w-6xl mx-auto px-6 py-12 mt-12 border-t border-slate-200 dark:border-slate-800">
+    <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+      <div class="flex space-x-6">
+        <a class="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-sm font-medium" href="https://ankandas.online" target="_blank" rel="noopener noreferrer">Made by ankan06das</a>
+        <a class="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-sm font-medium" href="">GitHub</a>
+        <!-- <a class="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors text-sm font-medium" href="#">About BPE</a> -->
+      </div>
+    </div>
+  </footer>
+  <!-- END: Footer -->
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
