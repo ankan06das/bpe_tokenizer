@@ -13,6 +13,16 @@ const API = {
     const res = await fetch("/load", { method: "POST", body: form });
     return res.json();
   },
+  async listModels() {
+    const res = await fetch("/models");
+    return res.json();
+  },
+  async loadPretrained(filename) {
+    const res = await fetch(`/load-pretrained/${encodeURIComponent(filename)}`, {
+      method: "POST"
+    });
+    return res.json();
+  }
 };
 
 const TIKTOKEN_COLORS = [
@@ -64,6 +74,104 @@ async function loadModel() {
     status.className = "mt-2 text-xs text-red-500 font-medium";
   } finally {
     btn.disabled = false;
+  }
+}
+
+function switchModelTab(tab) {
+  const tabPretrained = document.getElementById("tab-pretrained");
+  const tabUpload = document.getElementById("tab-upload");
+  const pretrainedContent = document.getElementById("pretrained-content");
+  const uploadContent = document.getElementById("upload-content");
+  const status = document.getElementById("load-status");
+
+  if (status) {
+    status.textContent = "";
+  }
+
+  if (tab === "pretrained") {
+    tabPretrained.classList.add("bg-white", "dark:bg-slate-700", "shadow-sm");
+    tabPretrained.classList.remove("text-slate-500", "dark:text-slate-400");
+    tabPretrained.classList.add("text-slate-700", "dark:text-slate-300");
+
+    tabUpload.classList.remove("bg-white", "dark:bg-slate-700", "shadow-sm");
+    tabUpload.classList.add("text-slate-500", "dark:text-slate-400");
+    tabUpload.classList.remove("text-slate-700", "dark:text-slate-300");
+
+    pretrainedContent.classList.remove("hidden");
+    uploadContent.classList.add("hidden");
+  } else {
+    tabUpload.classList.add("bg-white", "dark:bg-slate-700", "shadow-sm");
+    tabUpload.classList.remove("text-slate-500", "dark:text-slate-400");
+    tabUpload.classList.add("text-slate-700", "dark:text-slate-300");
+
+    tabPretrained.classList.remove("bg-white", "dark:bg-slate-700", "shadow-sm");
+    tabPretrained.classList.add("text-slate-500", "dark:text-slate-400");
+    tabPretrained.classList.remove("text-slate-700", "dark:text-slate-300");
+
+    uploadContent.classList.remove("hidden");
+    pretrainedContent.classList.add("hidden");
+  }
+}
+
+async function loadPretrainedModel() {
+  const select = document.getElementById("model-select");
+  const status = document.getElementById("load-status");
+  const btn = document.getElementById("load-pretrained-btn");
+
+  if (!select.value) {
+    status.textContent = "Please select a model from the list.";
+    status.className = "mt-2 text-xs text-red-500 font-medium";
+    return;
+  }
+
+  status.textContent = "Loading model...";
+  status.className = "mt-2 text-xs text-indigo-500 font-medium";
+  btn.disabled = true;
+
+  try {
+    const result = await API.loadPretrained(select.value);
+    status.textContent = `Model loaded successfully (vocab size: ${result.vocab_size})`;
+    status.className = "mt-2 text-xs text-emerald-500 font-medium";
+    window._modelTrained = true;
+    window._vocabSize = result.vocab_size;
+    updateModelStatus();
+    tokenize();
+  } catch (err) {
+    status.textContent = `Error: ${err.message || err}`;
+    status.className = "mt-2 text-xs text-red-500 font-medium";
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function fetchModels() {
+  const select = document.getElementById("model-select");
+  if (!select) return;
+
+  try {
+    const models = await API.listModels();
+    select.innerHTML = "";
+    if (models.length === 0) {
+      const opt = document.createElement("option");
+      opt.textContent = "No models available in /models";
+      opt.disabled = true;
+      opt.selected = true;
+      select.appendChild(opt);
+      return;
+    }
+
+    models.forEach((model) => {
+      const opt = document.createElement("option");
+      opt.value = model;
+      // Make the label pretty: e.g. tokenizer_shakespeare_12712.pkl -> Shakespeare 12712
+      let prettyName = model.replace(/\.pkl$/, "").replace(/^tokenizer_/, "");
+      prettyName = prettyName.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+      opt.textContent = prettyName;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("Failed to load pretrained models list:", err);
+    select.innerHTML = `<option disabled selected>Error loading models</option>`;
   }
 }
 
@@ -206,6 +314,7 @@ function initTheme() {
 document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   updateModelStatus();
+  fetchModels();
 
   let debounceTimer;
   const inputText = document.getElementById("input-text");

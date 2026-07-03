@@ -38,3 +38,31 @@ async def load(file: UploadFile = File(...)):
     finally:
         Path(tmppath).unlink(missing_ok=True)
     return {"status": "loaded", "vocab_size": len(bpe.vocab)}
+
+
+@app.get("/models")
+def list_models():
+    models_dir = Path(__file__).resolve().parent.parent / "models"
+    if not models_dir.exists():
+        return []
+    return [p.name for p in models_dir.glob("*.pkl")]
+
+
+@app.post("/load-pretrained/{filename}")
+def load_pretrained(filename: str):
+    models_dir = Path(__file__).resolve().parent.parent / "models"
+    model_path = models_dir / filename
+    # Security check: resolve and verify it's inside models_dir
+    try:
+        model_path = model_path.resolve()
+        if not model_path.is_file() or models_dir.resolve() not in model_path.parents:
+            raise HTTPException(400, "Invalid model file")
+    except Exception:
+        raise HTTPException(400, "Invalid model file path")
+    
+    try:
+        bpe.load(str(model_path))
+    except Exception as e:
+        raise HTTPException(400, f"Failed to load model: {e}")
+    return {"status": "loaded", "vocab_size": len(bpe.vocab)}
+

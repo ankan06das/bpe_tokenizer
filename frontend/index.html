@@ -66,10 +66,28 @@
       </div>
       <!-- Load Model -->
       <div class="md:col-span-2 bg-white dark:bg-[#1e293b] rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm transition-colors duration-200">
-        <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-2">
           <h2 class="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Load BPE Model</h2>
+          <div class="flex space-x-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-medium">
+            <button id="tab-pretrained" class="px-3 py-1 rounded-md text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 shadow-sm transition-all" onclick="switchModelTab('pretrained')">Pretrained</button>
+            <button id="tab-upload" class="px-3 py-1 rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-all" onclick="switchModelTab('upload')">Upload Custom</button>
+          </div>
         </div>
-        <div class="flex space-x-3">
+        
+        <!-- Pretrained tab content -->
+        <div id="pretrained-content" class="flex space-x-3">
+          <div class="relative flex-grow">
+            <select id="model-select" class="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-[#0f172a] text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="" disabled selected>Loading models...</option>
+            </select>
+          </div>
+          <button id="load-pretrained-btn" onclick="loadPretrainedModel()" class="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 dark:shadow-indigo-900/20 active:transform active:scale-95">
+            Load
+          </button>
+        </div>
+
+        <!-- Upload tab content -->
+        <div id="upload-content" class="flex space-x-3 hidden">
           <div class="relative flex-grow">
             <input class="hidden" id="model-file" type="file" accept=".pkl">
             <label class="flex items-center px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-slate-50 dark:bg-[#0f172a] cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-sm text-slate-600 dark:text-slate-300" for="model-file">
@@ -83,6 +101,7 @@
             Load
           </button>
         </div>
+        
         <div id="load-status" class="mt-2 text-xs"></div>
       </div>
     </section>
